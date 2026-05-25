@@ -92,11 +92,17 @@ check_and_define(FUNCS check_function_exists)
 
 if(STRERROR_R)
     target_compile_definitions(SQLite3 PRIVATE HAVE_STRERROR_R=1 HAVE_DECL_STRERROR_R=1)
-    check_c_source_runs("
+    include(CheckCSourceCompiles)
+    set(CMAKE_REQUIRED_FLAGS "-Werror=int-conversion")
+    check_c_source_compiles("
     #include <string.h>
     int main() {
-        return (strerror_r(0, (char*)0, 0) == (char*)0);
+        char buf[64];
+        char *p = strerror_r(0, buf, sizeof(buf));
+        (void)p;
+        return 0;
     }" HAVE_GNU_STRERROR_R)
+    unset(CMAKE_REQUIRED_FLAGS)
     if(HAVE_GNU_STRERROR_R)
         target_compile_definitions(SQLite3 PRIVATE STRERROR_R_CHAR_P=1)
     endif()
